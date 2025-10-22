@@ -100,7 +100,7 @@ class UVSunscreenAnalyzer:
         }
         return stats
     
-    def analyze_all_timepoints(self):
+    def analyze_all_timepoints(self) -> dict:
         """
         Analyze both ROIs across all timepoints
         Returns dictionary with results

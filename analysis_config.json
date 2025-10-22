@@ -1,0 +1,28 @@
+{
+  "analysis": {
+    "name": "UV Sunscreen Analysis",
+    "version": "2.0",
+    "description": "Analysis of UV sunscreen effectiveness over time"
+  },
+  "images": {
+    "directory": "images/",
+    "timepoints_hours": [0, 2, 4, 6],
+    "files": ["0hours.JPG", "2hours.JPG", "4hours.JPG", "6hours.JPG"]
+  },
+  "roi_settings": {
+    "display_scale": 0.3,
+    "sunscreen_roi_description": "Left square - sunscreen area",
+    "control_roi_description": "Between squares - control area"
+  },
+  "output": {
+    "directories": {
+      "figures": "outputs/figures/",
+      "reports": "outputs/reports/"
+    },
+    "files": {
+      "csv": "uv_data.csv",
+      "json": "analysis_results.json",
+      "histograms": "histograms.png"
+    }
+  }
+}
