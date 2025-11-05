@@ -1,0 +1,11 @@
+name = "sunscreen-analysis"
+version = "1.0.0"
+description = "UV sunscreen effectiveness analysis tool"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv.sources]
+# Use existing environment, don't create new one
+python = "system"

@@ -1,0 +1,9 @@
+timepoint_hours,roi_type,min_intensity,max_intensity,mean_intensity,median_intensity,std_dev,range,pixel_count
+0,sunscreen,12,81,23.88,24.00,3.23,69,51920
+0,control,36,111,67.25,68.00,7.38,75,110880
+2,sunscreen,12,81,26.72,27.00,3.42,69,51920
+2,control,38,115,68.66,69.00,7.56,77,110880
+4,sunscreen,10,89,21.64,22.00,3.32,79,51920
+4,control,25,115,66.19,67.00,9.03,90,110880
+6,sunscreen,11,87,23.21,23.00,3.78,76,51920
+6,control,37,109,67.17,67.00,6.91,72,110880

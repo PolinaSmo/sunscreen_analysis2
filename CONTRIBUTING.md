@@ -12,4 +12,3 @@ use venv/Scripts/activate for Windows
 
 cd sunscreen-analysis2
 pip install -r requirements.txt
-'EOF'
