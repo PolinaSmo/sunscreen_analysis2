@@ -1,16 +1,21 @@
 import sys
 import os
 from pathlib import Path
+# import importlib
 
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
+#disabling pycache for now
+sys.dont_write_bytecode = True
+os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 
 from src.core.image_loader import ImageLoader
 # from src.ui.roi_selector import ROISelector
 from src.ui.roi_setter import ROISetter
 from src.core.intensity_analyzer import IntensityAnalyzer
 from src.data.exporter import DataExporter
+# importlib.reload(DataExporter)
 from src.visualization.plotter import Plotter
 
 

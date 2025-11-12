@@ -3,7 +3,7 @@ import cv2
 class ROISetter:
     def __init__(self):
         self.sunscreen_roi = (620, 813, 300, 326)  
-        self.control_roi = (1240, 773, 300, 373)    
+        self.control_roi = (1240, 813, 300, 326)    
         self.roi_size = (300, 300)  
         print("Using fixed ROIs:")
         print(f"  Sunscreen: {self.sunscreen_roi}")
