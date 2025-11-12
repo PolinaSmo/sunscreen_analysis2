@@ -1,4 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
 venv/
-.venv/
-.venv/
+sunscreen_venv/
+
+# Data and outputs
+outputs/
+*.png
+*.jpg
+*.jpeg
+*.csv
+*.json
+
+# IDE
 .vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

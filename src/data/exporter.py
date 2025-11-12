@@ -6,26 +6,29 @@ from pathlib import Path
 class DataExporter:
     @staticmethod
     def export_all(results, base_name='uv_analysis'):
-        """Export to both CSV and JSON with one call"""
         Path('outputs/reports').mkdir(parents=True, exist_ok=True)
-        
+    
+        #CSV using pandas
         df = DataExporter._results_to_dataframe(results)
-        csv_path = f'outputs/reports/{base_name}.csv'
+        csv_path = f'outputs/reports/{base_name}.csv' #define csv_path seperately, doesn't work otherwise (?)
         df.to_csv(csv_path, index=False, float_format='%.2f')
         
+        #JSON using pandas to_dict
         json_path = f'outputs/reports/{base_name}.json'
         json_data = {
-            'metadata': {'timestamp': datetime.now().isoformat()},
+            'metadata': {
+                'timestamp': datetime.now().isoformat(),
+                'exported_from': 'automated_exporter',
+            },
             'statistics': df.to_dict('records'),
-            'summary': {'total_measurements': len(df)}
-        }
-        
+            'summary': {
+                'total_measurements': len(df),
+                'timepoints_analyzed': len(results),
+            }}
         with open(json_path, 'w') as f:
             json.dump(json_data, f, indent=2)
-        
-        print(f"Exported {csv_path} and {json_path}")
+        # print(f"Exported {csv_path} and {json_path}")
         return df
-    
     @staticmethod
     def _results_to_dataframe(results):
         rows = []
@@ -44,11 +47,8 @@ class DataExporter:
                     'pixel_count': stats['pixel_count']
                 })
         return pd.DataFrame(rows)
-    
     @staticmethod
     def print_statistics(results):
         df = DataExporter._results_to_dataframe(results)
-        print("\n" + "="*80)
         print("ANALYSIS RESULTS")
-        print("="*80)
         print(df.round(2).to_string(index=False))
