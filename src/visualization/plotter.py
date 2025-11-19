@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 class Plotter:
     @staticmethod
     def plot_intensity_distributions(results, save_path='intensity_distributions.png'):
-        """Plot histograms of intensity distributions"""
         fig, axes = plt.subplots(2, 2, figsize=(15, 10))
         fig.suptitle('Intensity Distributions Across Timepoints', fontsize=16)
         

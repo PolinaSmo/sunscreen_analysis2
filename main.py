@@ -2,6 +2,7 @@ import sys
 import os
 from pathlib import Path
 # import importlib
+os.environ['QT_QPA_PLATFORM'] = 'xcb'
 
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
