@@ -1,7 +1,15 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 class Plotter:
     @staticmethod
+
+    def optimal_bins(data):
+            #freedman-diaconis rule
+            iqr = np.percentile(data,75) - np.percentile(data,25)
+            bin_width = 2 * iqr * (len(data) ** (-1/3))
+            return max(10, int((max(data) - min(data)) / bin_width))
+    
     def plot_intensity_distributions(results, save_path='intensity_distributions.png'):
         fig, axes = plt.subplots(2, 2, figsize=(15, 10))
         fig.suptitle('Intensity Distributions Across Timepoints', fontsize=16)
@@ -12,6 +20,8 @@ class Plotter:
             sunscreen_int = results[time]['sunscreen']['intensities']
             control_int = results[time]['control']['intensities']
             
+            bins = Plotter.optimal_bins(np.concatenate([sunscreen_int, control_int]))
+
             ax.hist(sunscreen_int, bins=50, alpha=0.6, label='Sunscreen', color='green', edgecolor='black')
             ax.hist(control_int, bins=50, alpha=0.6, label='Control', color='red', edgecolor='black')
             
@@ -20,6 +30,8 @@ class Plotter:
             ax.set_title(f'Timepoint: {time} hours')
             ax.legend()
             ax.grid(True, alpha=0.3)
+        
+        
         
         plt.tight_layout()
         plt.savefig(save_path, dpi=300, bbox_inches='tight')

@@ -17,7 +17,3 @@ class ImageLoader:
             print(f"Loaded: {path} - Shape: {img.shape}")
         
         return self.images
-    
-    def preprocess_image(self, image):
-        less_noise = cv2.medianBlur(image, 3)
-        return less_noise

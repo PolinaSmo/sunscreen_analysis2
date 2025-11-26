@@ -18,3 +18,6 @@ def calculate_statistics(intensities):
         'kurtosis': scipy_stats.kurtosis(intensities) if len(intensities) > 1 else 0,
     }
     return stats_dict
+
+def calculate_protection_factor(sunscreen_mean, control_mean):
+    return (1 - (sunscreen_mean / control_mean)) * 100

@@ -13,7 +13,8 @@ os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 
 from src.core.image_loader import ImageLoader
 # from src.ui.roi_selector import ROISelector
-from src.ui.roi_setter import ROISetter
+# from src.ui.roi_setter import ROISetter
+from src.ui.roi_detector import ROIDetector
 from src.core.intensity_analyzer import IntensityAnalyzer
 from src.data.exporter import DataExporter
 # importlib.reload(DataExporter)
@@ -36,13 +37,16 @@ def main():
         
     image_loader = ImageLoader()
     # roi_selector = ROISelector()
-    roi_setter = ROISetter()
+    # roi_setter = ROISetter()
+    roi_detector = ROIDetector()
     # intensity_analyzer = IntensityAnalyzer(roi_selector)
-    intensity_analyzer = IntensityAnalyzer(roi_setter)
+    # intensity_analyzer = IntensityAnalyzer(roi_setter)
+    intensity_analyzer = IntensityAnalyzer(roi_detector)
     images = image_loader.load_images(image_paths)
     
     # roi_selector.set_rois(images[0])
-    roi_setter.set_rois(images[0])
+    # roi_setter.set_rois(images[0])
+    roi_detector.detect_rois(images[0])
     
     results = intensity_analyzer.analyze_all_timepoints(images, timepoints)
 
