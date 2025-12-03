@@ -8,7 +8,7 @@ class ROIDragger:
         self.roi_size = roi_size  # (width, height)
         self.current_roi = None
         self.dragging = False
-        self.selections = {}  # Store selections per image
+        self.selections = {}  #store selections per image
     
     def select_roi_interactive(self, image, image_name, window_name="Drag ROI"):
         img_display = image.copy()
@@ -43,7 +43,7 @@ class ROIDragger:
         cv2.setMouseCallback(window_name, mouse_callback)
         
         print(f"\n=== Selecting ROI for {image_name} ===")
-        print("Drag the green square to desired position")
+        print("Drag the green square into position")
         print("Press SPACE to confirm, 'r' to reset, ESC to cancel")
         
         while True:
@@ -57,7 +57,7 @@ class ROIDragger:
             cv2.putText(display_img, f"ROI: ({x},{y})", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
             cv2.putText(display_img, f"Size: {w}x{h}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
             
-            cv2.putText(display_img, "Drag to move | SPACE: Save | ESC: Cancel", (10, h - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            cv2.putText(display_img, "Drag to move, SPACE: Save, ESC: Cancel", (10, h - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
             cv2.imshow(window_name, display_img)
             
             key = cv2.waitKey(1) & 0xFF
@@ -65,7 +65,7 @@ class ROIDragger:
             if key == ord(' '): 
                 cv2.destroyWindow(window_name)
                 self.selections[image_name] = tuple(self.current_roi)
-                print(f"✓ ROI saved for {image_name}: {self.current_roi}")
+                print(f"ROI saved for {image_name}: {self.current_roi}")
                 return tuple(self.current_roi)
             
             elif key == ord('r'):
