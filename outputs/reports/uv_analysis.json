@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "timestamp": "2025-11-26T09:34:18.059407",
+    "timestamp": "2025-12-03T04:35:31.192902",
     "exported_from": "automated_exporter"
   },
   "statistics": [
@@ -9,9 +9,9 @@
       "roi_type": "sunscreen",
       "min_intensity": 10,
       "max_intensity": 80,
-      "mean_intensity": 23.04361111111111,
+      "mean_intensity": 23.060777777777776,
       "median_intensity": 23.0,
-      "std_dev": 3.5042637939593417,
+      "std_dev": 3.4933707783545866,
       "range": 70,
       "pixel_count": 90000
     },
@@ -20,9 +20,9 @@
       "roi_type": "control",
       "min_intensity": 36,
       "max_intensity": 111,
-      "mean_intensity": 65.24984444444445,
-      "median_intensity": 65.0,
-      "std_dev": 6.968022194937083,
+      "mean_intensity": 65.58252222222222,
+      "median_intensity": 66.0,
+      "std_dev": 7.108252721274488,
       "range": 75,
       "pixel_count": 90000
     },
@@ -31,9 +31,9 @@
       "roi_type": "sunscreen",
       "min_intensity": 11,
       "max_intensity": 80,
-      "mean_intensity": 26.50883333333333,
+      "mean_intensity": 26.52897777777778,
       "median_intensity": 27.0,
-      "std_dev": 3.4222036070020403,
+      "std_dev": 3.425593907883478,
       "range": 69,
       "pixel_count": 90000
     },
@@ -42,9 +42,9 @@
       "roi_type": "control",
       "min_intensity": 38,
       "max_intensity": 114,
-      "mean_intensity": 66.64482222222222,
-      "median_intensity": 66.0,
-      "std_dev": 7.272082375737102,
+      "mean_intensity": 67.01476666666667,
+      "median_intensity": 67.0,
+      "std_dev": 7.317464174531745,
       "range": 76,
       "pixel_count": 90000
     },
@@ -53,32 +53,32 @@
       "roi_type": "sunscreen",
       "min_intensity": 7,
       "max_intensity": 89,
-      "mean_intensity": 21.479744444444446,
+      "mean_intensity": 21.505455555555557,
       "median_intensity": 21.0,
-      "std_dev": 4.006596053346451,
+      "std_dev": 4.010219336370826,
       "range": 82,
       "pixel_count": 90000
     },
     {
       "timepoint_hours": 4,
       "roi_type": "control",
-      "min_intensity": 32,
+      "min_intensity": 34,
       "max_intensity": 114,
-      "mean_intensity": 65.70068888888889,
+      "mean_intensity": 66.57222222222222,
       "median_intensity": 66.0,
-      "std_dev": 6.90086078148459,
-      "range": 82,
+      "std_dev": 7.08811098135114,
+      "range": 80,
       "pixel_count": 90000
     },
     {
       "timepoint_hours": 6,
       "roi_type": "sunscreen",
-      "min_intensity": 9,
+      "min_intensity": 10,
       "max_intensity": 86,
-      "mean_intensity": 22.404544444444443,
+      "mean_intensity": 22.423844444444445,
       "median_intensity": 22.0,
-      "std_dev": 3.7915255524249547,
-      "range": 77,
+      "std_dev": 3.7930902526424757,
+      "range": 76,
       "pixel_count": 90000
     },
     {
@@ -86,9 +86,9 @@
       "roi_type": "control",
       "min_intensity": 36,
       "max_intensity": 110,
-      "mean_intensity": 65.34375555555556,
-      "median_intensity": 65.0,
-      "std_dev": 6.569786814249863,
+      "mean_intensity": 65.40654444444445,
+      "median_intensity": 66.0,
+      "std_dev": 6.60503675262903,
       "range": 74,
       "pixel_count": 90000
     }
