@@ -22,16 +22,20 @@ def main():
     print("DEBUG 4: Entering main() function")
     
     image_paths = [
-        'images/0hours.JPG',  
-        'images/2hours.JPG',
-        'images/4hours.JPG', 
-        'images/6hours.JPG', 
+        'images/11/0hours.JPG',  
+        'images/11/2hours.JPG',
+        'images/11/4hours.JPG', 
+        'images/11/6hours.JPG',
+
+        'images/13/0hours.JPG',  
+        'images/13/2hours.JPG',
+        'images/13/4hours.JPG', 
+        'images/13/6hours.JPG', 
     ]
     timepoints = [0, 2, 4, 6]
     
     print(f"DEBUG 5: Checking {len(image_paths)} images")
     
-    # Check if images exist
     for path in image_paths:
         if not Path(path).exists():
             print(f"DEBUG 6: MISSING IMAGE: {path}")
@@ -66,7 +70,7 @@ def main():
     print("DEBUG 16: Generating plots")
     Plotter.plot_intensity_distributions(results, 'outputs/figures/histograms.png')
     
-    print("DEBUG 17: Analysis complete!")
+    print("DEBUG 17: Analysis done")
 
 if __name__ == "__main__":
     print("DEBUG 18: __name__ == '__main__' is True")
