@@ -5,7 +5,7 @@ from pathlib import Path
 
 class ROIDragger:
     def __init__(self, roi_size=(300, 300)):
-        self.roi_size = roi_size  # (width, height)
+        self.roi_size = roi_size  #(width, height)
         self.current_roi = None
         self.dragging = False
         self.selections = {}  #store selections per image
@@ -13,13 +13,51 @@ class ROIDragger:
     def select_roi_interactive(self, image, image_name, window_name="Drag ROI"):
         img_display = image.copy()
         h, w = img_display.shape[:2]
+
+        max_display_height = 700  #smaller than half my screen
+        max_display_width = 1200
+    
+        scale_h = max_display_height / h
+        scale_w = max_display_width / w
         
-        #default starting position (making it center of the image)
+        scale = min(scale_h, scale_w)
+        
+        display_h = int(h * scale)
+        display_w = int(w * scale)
+        
+        display_img_resized = cv2.resize(img_display, (display_w, display_h))
+        self.scale_factor = scale 
+
+        # if h > max_display_height or w > max_display_width:
+        #     scale_h = max_display_height / h
+        #     scale_w = max_display_width / w
+        #     scale = min(scale_h, scale_w)
+            
+        #     display_h = int(h * scale)
+        #     display_w = int(w * scale)
+            
+        #     # We need to track scaling for mouse coordinates
+        #     self.scale_factor = scale
+        #     display_img_resized = cv2.resize(img_display, (display_w, display_h))
+        # else:
+        #     self.scale_factor = 1.0
+        #     display_img_resized = img_display
+        #     display_h, display_w = h, w
+        
+        # Adjust default position for scaled display
+        default_x = display_w // 2 - int(self.roi_size[0] * self.scale_factor) // 2
+        default_y = display_h // 2 - int(self.roi_size[1] * self.scale_factor) // 2
+        self.current_roi = [default_x, default_y, int(self.roi_size[0] * self.scale_factor), int(self.roi_size[1] * self.scale_factor)]
+            
+            #default starting position (making it center of the image)
         default_x = w // 2 - self.roi_size[0] // 2
         default_y = h // 2 - self.roi_size[1] // 2
         self.current_roi = [default_x, default_y, self.roi_size[0], self.roi_size[1]]
         
         def mouse_callback(event, x, y, flags, param):
+            orig_x = int(x / self.scale_factor)
+            orig_y = int(y / self.scale_factor)
+
             if event == cv2.EVENT_LBUTTONDOWN:
                 rx, ry, rw, rh = self.current_roi
                 if rx <= x <= rx + rw and ry <= y <= ry + rh:
@@ -40,9 +78,10 @@ class ROIDragger:
                 self.dragging = False
         
         cv2.namedWindow(window_name)
+        cv2.resizeWindow(window_name, display_w, display_h)
         cv2.setMouseCallback(window_name, mouse_callback)
         
-        print(f"\n=== Selecting ROI for {image_name} ===")
+        print(f"\n Selecting ROI for {image_name}")
         print("Drag the green square into position")
         print("Press SPACE to confirm, 'r' to reset, ESC to cancel")
         
