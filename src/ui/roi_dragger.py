@@ -16,7 +16,7 @@ class ROIDragger:
 
         max_display_height = 700  #smaller than half my screen
         max_display_width = 1200
-    
+        
         scale_h = max_display_height / h
         scale_w = max_display_width / w
         

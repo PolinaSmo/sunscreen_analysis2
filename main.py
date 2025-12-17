@@ -1,6 +1,10 @@
 import sys
 import os
 from pathlib import Path
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+import numpy as np
 
 import cv2
 
@@ -64,7 +68,12 @@ def analyze_person(person_id):
     test_image = images[0].copy()
     cv2.putText(test_image, "TEST - Press any key", (50, 50), 
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-    cv2.imshow("Simple Test Window", cv2.resize(test_image, (800, 600)))
+
+    # cv2.imshow("Simple Test Window", cv2.resize(test_image, (800, 600)))
+    cv2.namedWindow('Some Name', cv2.WINDOW_NORMAL)
+    cv2.resizeWindow('Some Name', 900, 700)  # Adjust these numbers!
+    cv2.imshow('Some Name', test_image)
+
     print("DEBUG: Test window should appear - Press any key")
     cv2.waitKey(0)
     cv2.destroyAllWindows()
