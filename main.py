@@ -2,13 +2,15 @@ import sys
 import os
 from pathlib import Path
 import matplotlib
+from matplotlib.font_manager import json_load
+
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import numpy as np
 
 import cv2
 
-print("DEBUG 1: Starting script")
+print("DEBUG 1: Start running script")
 
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
@@ -20,7 +22,9 @@ os.environ['QT_QPA_PLATFORM'] = 'xcb'
 
 print("DEBUG 2: Before imports")
 from src.core.image_loader import ImageLoader
-# from src.ui.roi_setter import ROISetter
+# from src.ui.roi_setter import ROI
+#
+# Setter
 from src.ui.roi_dragger import ROIDragger
 from src.core.intensity_analyzer import IntensityAnalyzer
 from src.data.exporter import DataExporter
@@ -28,7 +32,7 @@ from src.visualization.plotter import Plotter
 print("DEBUG 3: Imports successful")
 
 def analyze_person(person_id):
-    print(f"\n=== DEBUG: Starting Person {person_id} ===")
+    print(f"\nDEBUG: Starting subject {person_id} ===")
     
     image_paths = [
         f'images/{person_id}/0hours.JPG',
@@ -41,12 +45,12 @@ def analyze_person(person_id):
     print(f"DEBUG: Checking {len(image_paths)} image paths")
     for path in image_paths:
         exists = Path(path).exists()
-        print(f"  {path}: {'✓' if exists else '✗'}")
+        print(f"  {path}: {'-exists-' if exists else '-does not exist-'}")
         if not exists:
             print(f"ERROR: Missing image: {path}")
             return None
     
-    print("DEBUG: All images found, loading...")
+    print("DEBUG: All images found, now loading them in")
     
     # Load images
     image_loader = ImageLoader()
@@ -56,20 +60,25 @@ def analyze_person(person_id):
     # CHECK 2: Are images valid?
     for i, img in enumerate(images):
         print(f"  Image {i}: Shape {img.shape}, Type {img.dtype}")
-    
     # CHECK 3: Before ROI selection
     print("DEBUG: Creating ROIDragger...")
     roi_dragger = ROIDragger(roi_size=(300, 300))
+    sunscreen_roi = roi_dragger.select_roi_interactive(images[0], "sunscreen")
+    control_roi = roi_dragger.select_roi_interactive(images[0], "control")
+
+    # Save for next time
+    roi_dragger.save_selections("my_rois.json")
     
     # CHECK 4: Try minimal ROI test
     print("DEBUG: Testing simple ROI display...")
     
     # Test with a simple OpenCV window
     test_image = images[0].copy()
-    cv2.putText(test_image, "TEST - Press any key", (50, 50), 
-                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    cv2.putText(test_image, "TEST - Press any key", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
     # cv2.imshow("Simple Test Window", cv2.resize(test_image, (800, 600)))
+    #check above for manual values later - squished or not ? - potential to run through each iteration of ROI dragging stage ?
+
     cv2.namedWindow('Some Name', cv2.WINDOW_NORMAL)
     cv2.resizeWindow('Some Name', 900, 700)  # Adjust these numbers!
     cv2.imshow('Some Name', test_image)
@@ -99,7 +108,6 @@ def main():
     person_ids = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
     
     all_results = {}
-    
     for person_id in person_ids:
         results = analyze_person(person_id)
         if results:
@@ -173,6 +181,7 @@ def main():
 #     print("DEBUG 15: Exporting results")
 #     DataExporter.print_statistics(results)
 #     DataExporter.export_all(results, 'uv_analysis')
+
     
 #     print("DEBUG 16: Generating plots")
 #     Plotter.plot_intensity_distributions(results, 'outputs/figures/histograms.png')
