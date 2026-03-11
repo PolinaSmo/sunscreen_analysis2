@@ -1,0 +1,100 @@
+{
+  "metadata": {
+    "timestamp": "2025-12-03T09:59:16.189873",
+    "exported_from": "automated_exporter"
+  },
+  "statistics": [
+    {
+      "timepoint_hours": 0,
+      "roi_type": "sunscreen",
+      "min_intensity": 10,
+      "max_intensity": 80,
+      "mean_intensity": 23.04116564417178,
+      "median_intensity": 23.0,
+      "std_dev": 3.570972307656664,
+      "range": 70,
+      "pixel_count": 97800
+    },
+    {
+      "timepoint_hours": 0,
+      "roi_type": "control",
+      "min_intensity": 36,
+      "max_intensity": 111,
+      "mean_intensity": 66.24663599182004,
+      "median_intensity": 66.0,
+      "std_dev": 7.245655840622681,
+      "range": 75,
+      "pixel_count": 97800
+    },
+    {
+      "timepoint_hours": 2,
+      "roi_type": "sunscreen",
+      "min_intensity": 11,
+      "max_intensity": 80,
+      "mean_intensity": 26.49038854805726,
+      "median_intensity": 27.0,
+      "std_dev": 3.425928090986913,
+      "range": 69,
+      "pixel_count": 97800
+    },
+    {
+      "timepoint_hours": 2,
+      "roi_type": "control",
+      "min_intensity": 38,
+      "max_intensity": 114,
+      "mean_intensity": 67.45398773006134,
+      "median_intensity": 67.0,
+      "std_dev": 7.343704052484917,
+      "range": 76,
+      "pixel_count": 97800
+    },
+    {
+      "timepoint_hours": 4,
+      "roi_type": "sunscreen",
+      "min_intensity": 7,
+      "max_intensity": 89,
+      "mean_intensity": 21.441625766871166,
+      "median_intensity": 21.0,
+      "std_dev": 4.021001540611731,
+      "range": 82,
+      "pixel_count": 97800
+    },
+    {
+      "timepoint_hours": 4,
+      "roi_type": "control",
+      "min_intensity": 32,
+      "max_intensity": 114,
+      "mean_intensity": 66.96875255623722,
+      "median_intensity": 67.0,
+      "std_dev": 7.420685252018726,
+      "range": 82,
+      "pixel_count": 97800
+    },
+    {
+      "timepoint_hours": 6,
+      "roi_type": "sunscreen",
+      "min_intensity": 9,
+      "max_intensity": 86,
+      "mean_intensity": 22.367126789366054,
+      "median_intensity": 22.0,
+      "std_dev": 3.7948050172431493,
+      "range": 77,
+      "pixel_count": 97800
+    },
+    {
+      "timepoint_hours": 6,
+      "roi_type": "control",
+      "min_intensity": 36,
+      "max_intensity": 108,
+      "mean_intensity": 66.13360940695297,
+      "median_intensity": 66.0,
+      "std_dev": 6.741848919212152,
+      "range": 72,
+      "pixel_count": 97800
+    }
+  ],
+  "summary": {
+    "total_measurements": 8,
+    "timepoints_analyzed": 4
+  }
+}
