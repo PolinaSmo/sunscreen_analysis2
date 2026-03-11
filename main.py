@@ -10,6 +10,7 @@ import numpy as np
 
 import cv2
 #test comment on new laptop - ignore
+
 print("DEBUG 1: Start running script")
 
 project_root = Path(__file__).parent
