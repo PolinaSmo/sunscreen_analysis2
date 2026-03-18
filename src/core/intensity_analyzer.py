@@ -1,77 +1,55 @@
 import cv2
 import numpy as np
 from src.data.statistics import calculate_statistics
-from src.ui.roi_setter import ROISetter
 
 class IntensityAnalyzer:
-    # def __init__(self, roi_selector):
-    #     self.roi_selector = roi_selector
+    def __init__(self, rois_dict):
+        """
+        rois_dict : dict mapping ROI name to (x, y, width, height) tuple
+        """
+        self.rois = rois_dict
 
-    def __init__(self, roi_setter):
-        self.roi_setter = roi_setter
-    
     def extract_roi_intensities(self, image, roi):
+        """Extract grayscale intensities from a single ROI."""
         x, y, w, h = roi
+        img_h, img_w = image.shape[:2]
 
-        img_height, img_width = image.shape[:2]
-        x = max(0, min(x, img_width - 1))
-        y = max(0, min(y, img_height - 1))
-        w = min(w, img_width - x)
-        h = min(h, img_height - y)
+        # Clamp ROI to image boundaries
+        x = max(0, min(x, img_w - 1))
+        y = max(0, min(y, img_h - 1))
+        w = min(w, img_w - x)
+        h = min(h, img_h - y)
 
         roi_region = image[y:y+h, x:x+w]
-        
-        #better luminance
+
         if len(roi_region.shape) == 3:
-            b,g,r = cv2.split(roi_region)
-            gray = (0.114*b + 0.587*g + 0.299*r).astype(np.uint8)
-        else:gray = roi_region
+            # Proper luminance conversion (human perception)
+            b, g, r = cv2.split(roi_region)
+            gray = (0.299 * r + 0.587 * g + 0.114 * b).astype(np.uint8)
+        else:
+            gray = roi_region
 
-        
-        # #converting to grayscale
-        # if len(roi_region.shape) == 3:
-            # gray = cv2.cvtColor(roi_region, cv2.COLOR_BGR2GRAY)
-        # else:
-            # gray = roi_region
-        
-
-        #get rid of any fully black or fully white pixels (potential errors)
-        valid_pixels = gray[(gray > 5) & (gray < 250)]
-        # return gray.flatten()
-        return valid_pixels.flatten() if len(valid_pixels) > 0 else gray.flatten()
-    
-    def remove_outliers(self, intensities):
-        q1 = np.percentile(intensities, 25)
-        q3 = np.percentile(intensities, 75)
-        iqr = q3 - q1
-        lower_bound = q1 - 1.5 * iqr
-        upper_bound = q3 + 1.5 * iqr
-        return intensities[(intensities >= lower_bound) & (intensities <= upper_bound)]
+        # Optional: remove extreme values (potential artifacts)
+        valid = gray[(gray > 5) & (gray < 250)]
+        return valid.flatten() if len(valid) > 0 else gray.flatten()
 
     def analyze_timepoint(self, image, time):
-        # sunscreen_intensities = self.extract_roi_intensities(image, self.roi_selector.sunscreen_roi)
-        # control_intensities = self.extract_roi_intensities(image, self.roi_selector.control_roi)
-        sunscreen_intensities = self.extract_roi_intensities(image, self.roi_setter.sunscreen_roi)
-        control_intensities = self.extract_roi_intensities(image, self.roi_setter.control_roi)
-        
-        
-        return {
-            'sunscreen': {
-              'intensities': sunscreen_intensities,
-                'stats': calculate_statistics(sunscreen_intensities),
-                'roi': self.roi_setter.sunscreen_roi,
-                'pixel_count': len(sunscreen_intensities)
-            },
-            'control': {
-                'intensities': control_intensities,
-                'stats': calculate_statistics(control_intensities),
-                'roi': self.roi_setter.control_roi,
-                'pixel_count': len(control_intensities),
+        """Analyze all ROIs for one timepoint."""
+        results_for_time = {}
+        for name, roi in self.rois.items():
+            intensities = self.extract_roi_intensities(image, roi)
+            results_for_time[name] = {
+                'intensities': intensities,
+                'stats': calculate_statistics(intensities),
+                'roi': roi,
+                'pixel_count': len(intensities)
             }
-        }
-    
+        return results_for_time
+
     def analyze_all_timepoints(self, images, timepoints):
+        """Analyze all ROIs across all timepoints."""
         results = {}
-        for i, (img, time) in enumerate(zip(images, timepoints)):
-            results[time] = self.analyze_timepoint(img, time)
+        for i, (img, t) in enumerate(zip(images, timepoints)):
+            print(f"Analyzing timepoint {t}h...")
+            results[t] = self.analyze_timepoint(img, t)
         return results

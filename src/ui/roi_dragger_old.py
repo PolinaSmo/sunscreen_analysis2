@@ -73,20 +73,24 @@ class ROIDragger:
         cv2.resizeWindow(window_name, display_w, display_h)
         cv2.setMouseCallback(window_name, mouse_callback)
 
-        print(f"\nSelecting ROI for {image_name} \n")
-        print(f"ROI Size: {self.roi_size[0]}x{self.roi_size[1]} pixels")
-        print("Click and drag the green square to position it")
+        print(f"\n=== Selecting ROI for {image_name} ===")
+        print(f"ROI Size: {self.roi_size[0]}x{self.roi_size[1]} pixels (original)")
+        print("Click and DRAG the green square to position it")
         print("Press SPACE to confirm, 'r' to reset, ESC to cancel")
 
         while True:
+            # Create fresh copy of resized image
             display_copy = display_img_resized.copy()
             x, y, w_disp, h_disp = self.current_roi
 
+            # DRAW THE ROI RECTANGLE (thick and visible)
             cv2.rectangle(display_copy, (x, y), (x + w_disp, y + h_disp), (0, 255, 0), 3)
-            center_x, center_y = x + w_disp // 2, y + h_disp // 2 #center point just to have it
+
+            # Draw center point
+            center_x, center_y = x + w_disp // 2, y + h_disp // 2
             cv2.circle(display_copy, (center_x, center_y), 5, (0, 0, 255), -1)
 
-            # original image coordinates
+            # Calculate original image coordinates
             orig_x = int(x / self.scale_factor)
             orig_y = int(y / self.scale_factor)
             orig_w = int(w_disp / self.scale_factor)
@@ -99,11 +103,14 @@ class ROIDragger:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
             cv2.putText(display_copy, "DRAG the green square | SPACE: Save | ESC: Cancel",
                         (10, display_h - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
             cv2.imshow(window_name, display_copy)
+
             key = cv2.waitKey(1) & 0xFF
-            if key == ord(' '):  # space to confirm
+
+            if key == ord(' '):  # SPACE to confirm
                 cv2.destroyWindow(window_name)
-                # save og  coordinates
+                # Save original image coordinates
                 final_roi = (orig_x, orig_y, orig_w, orig_h)
                 self.selections[image_name] = final_roi
                 print(f"✓ ROI saved for {image_name}: {final_roi}")
@@ -111,12 +118,13 @@ class ROIDragger:
             elif key == ord('r'):  # 'r' to reset to center
                 self.current_roi = [default_x, default_y, roi_w_display, roi_h_display]
                 print("ROI reset to center")
-            elif key == 27:  # click esc key to cancel
+            elif key == 27:  # ESC to cancel
                 cv2.destroyWindow(window_name)
                 print("ROI selection cancelled")
                 return None
 
     def save_selections(self, filename="roi_positions.json"):
+        """Save all ROI positions to JSON file"""
         Path("config").mkdir(exist_ok=True)
         with open(f"config/{filename}", 'w') as f:
             json.dump(self.selections, f, indent=2)
