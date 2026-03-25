@@ -74,16 +74,9 @@ def main():
             return
         rois[name] = roi_coords
 
-    # Save ROI positions for this subject
     dragger.save_selections(f"roi_positions_{subject}.json")
-
-    # Initialize analyzer with all ROIs
     analyzer = IntensityAnalyzer(rois)
-
-    # Run analysis
     results = analyzer.analyze_all_timepoints(images, timepoints)
-
-    # Export results with subject in filename
     DataExporter.print_statistics(results)
     DataExporter.export_all(results, f'uv_analysis_{subject}')
 
