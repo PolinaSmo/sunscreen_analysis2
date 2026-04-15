@@ -150,7 +150,9 @@ class DataExporter:
                     'median_intensity': s['median'],
                     'std_dev': s['std'],
                     'range': s['range'],
-                    'pixel_count': s['pixel_count']
+                    'pixel_count': s['pixel_count'],
+                    'kurtosis' : s['kurtosis'],
+                    'coverage_quality' : s.get('kurtosis_peakedness', 'normal')
                 })
         return pd.DataFrame(rows)
 

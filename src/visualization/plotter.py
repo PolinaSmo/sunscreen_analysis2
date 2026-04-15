@@ -1,41 +1,56 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib
-matplotlib.use('TkAgg')
+
 
 class Plotter:
     @staticmethod
-
-    def optimal_bins(data):
-            #freedman-diaconis rule
-            iqr = np.percentile(data,75) - np.percentile(data,25)
-            bin_width = 2 * iqr * (len(data) ** (-1/3))
-            return max(10, int((max(data) - min(data)) / bin_width))
-    
     def plot_intensity_distributions(results, save_path='intensity_distributions.png'):
-        fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-        fig.suptitle('Intensity Distributions Across Timepoints', fontsize=16)
-        
-        for idx, time in enumerate(sorted(results.keys())):
-            ax = axes[idx // 2, idx % 2]
-            
-            sunscreen_int = results[time]['sunscreen']['intensities']
-            control_int = results[time]['control']['intensities']
-            
-            bins = Plotter.optimal_bins(np.concatenate([sunscreen_int, control_int]))
+        """Plot histograms for all ROIs at each timepoint."""
+        timepoints = sorted(results.keys())
+        n_times = len(timepoints)
 
-            ax.hist(sunscreen_int, bins=50, alpha=0.6, label='Sunscreen', color='green', edgecolor='black')
-            ax.hist(control_int, bins=50, alpha=0.6, label='Control', color='red', edgecolor='black')
-            
-            ax.set_xlabel('Intensity (0-255)')
+        # Create subplots grid
+        cols = 2
+        rows = (n_times + cols - 1) // cols
+        fig, axes = plt.subplots(rows, cols, figsize=(15, 5 * rows))
+
+        # Flatten axes for easy indexing
+        if n_times > 1:
+            axes = axes.flatten()
+        else:
+            axes = [axes]
+
+        # Get all ROI names from the first timepoint
+        first_time = timepoints[0]
+        roi_names = list(results[first_time].keys())
+        n_rois = len(roi_names)
+
+        # Generate distinct colors for each ROI
+        colors = plt.cm.tab10(np.linspace(0, 1, n_rois))
+        color_map = {name: colors[i] for i, name in enumerate(roi_names)}
+
+        for idx, time in enumerate(timepoints):
+            ax = axes[idx]
+            time_data = results[time]
+
+            # Plot histogram for each ROI
+            for roi_name in roi_names:
+                intensities = time_data[roi_name]['intensities']
+                ax.hist(intensities, bins=50, alpha=0.6,
+                        label=roi_name, color=color_map[roi_name],
+                        edgecolor='black')
+
+            ax.set_xlabel('Intensity')
             ax.set_ylabel('Pixel Count')
             ax.set_title(f'Timepoint: {time} hours')
             ax.legend()
             ax.grid(True, alpha=0.3)
-        
-        
-        
+
+        # Hide any unused subplots
+        for idx in range(n_times, len(axes)):
+            axes[idx].set_visible(False)
+
         plt.tight_layout()
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        plt.savefig(save_path, dpi=300)
         print(f"Histograms saved to: {save_path}")
-        # Removed plt.show() to avoid the non-interactive warning
+        plt.close()
