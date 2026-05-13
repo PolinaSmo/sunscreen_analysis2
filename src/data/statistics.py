@@ -18,6 +18,27 @@ def calculate_statistics(intensities):
     if len(filtered) < 4:
         filtered = intensities  # fallback if too few points
 
+    # Calculate base statistics
+    kurt = stats.kurtosis(filtered, fisher=True)
+    skew = stats.skew(filtered) if len(filtered) > 1 else 0
+
+    # NEW: Quality Score = Kurtosis / |Skewness|
+    # Higher score = better, more even coverage
+    if abs(skew) > 0.01:
+        quality_score = kurt / abs(skew)
+    else:
+        quality_score = kurt * 10 if kurt > 0 else 0  # Handle near-zero skew
+
+    # Classification based on quality score
+    if quality_score > 2:
+        quality_rating = "Excellent"
+    elif quality_score > 1:
+        quality_rating = "Good"
+    elif quality_score > 0.5:
+        quality_rating = "Moderate"
+    else:
+        quality_rating = "Poor"
+
     stats_dict = {
         'min': np.min(intensities),
         'max': np.max(intensities),
@@ -30,11 +51,10 @@ def calculate_statistics(intensities):
         'q1': np.percentile(intensities, 25),
         'q3': np.percentile(intensities, 75),
         'iqr': iqr,
-        # KURTOSIS - this is what your boss wants!
-        # Higher = more consistent coverage, Lower = more variable
-        'kurtosis': stats.kurtosis(filtered, fisher=True),  # Fisher=True gives 0 for normal distribution
-        'kurtosis_peakedness': 'high' if stats.kurtosis(filtered) > 1 else 'low' if stats.kurtosis(
-            filtered) < -1 else 'normal',
-        'skewness': stats.skew(filtered) if len(filtered) > 1 else 0,
+        'kurtosis': kurt,
+        'kurtosis_peakedness': 'high' if kurt > 1 else 'low' if kurt < -1 else 'normal',
+        'skewness': skew,
+        'quality_score': quality_score,
+        'quality_rating': quality_rating,
     }
     return stats_dict

@@ -32,7 +32,6 @@ def main():
     image_paths = []
 
     for tf in time_files:
-        # Try .JPG first, then .jpg, then .jpeg
         possible_paths = [
             base_path / f"{tf}.JPG",
             base_path / f"{tf}.jpg",
@@ -62,7 +61,6 @@ def main():
     images = loader.load_images(image_paths)
     first_image = images[0]
 
-
     # Get number of ROIs from user
     try:
         num_rois = int(input("How many ROIs do you want to define? "))
@@ -70,20 +68,58 @@ def main():
         print("Invalid input. Using default: 2 ROIs.")
         num_rois = 2
 
+    # ROI SELECTION LOOP with preview/redo option
     rois = {}
+    confirmed = False
 
-    for i in range(num_rois):
-        name = input(f"Enter name for ROI #{i + 1} (e.g., 'sunscreen', 'control'): ").strip()
-        if not name:
-            name = f"ROI_{i + 1}"
-        print(f"\n--- Defining ROI: {name} ---")
-        selector = RectangleROISelector(first_image)
-        roi_coords = selector.get_roi()
-        if roi_coords is None:
-            print("ROI selection cancelled. Exiting.")
-            return
-        rois[name] = roi_coords
+    while not confirmed:
+        rois = {}
+        for i in range(num_rois):
+            name = input(
+                f"Enter name for ROI #{i + 1} (e.g., 'sunscreen_left', 'control', 'sunscreen_right'): ").strip()
+            if not name:
+                name = f"ROI_{i + 1}"
+            print(f"\n--- Defining ROI: {name} ---")
+            selector = RectangleROISelector(first_image)
+            roi_coords = selector.get_roi()
+            if roi_coords is None:
+                print("ROI selection cancelled. Exiting.")
+                return
+            rois[name] = roi_coords
 
+        # ============================================
+        # PREVIEW STEP: Show all ROIs on one image
+        # ============================================
+        print("\n" + "=" * 50)
+        print("PREVIEW: Review your ROI selections")
+        print("=" * 50)
+
+        preview_img = first_image.copy()
+        colors = [(0, 255, 0), (0, 0, 255), (255, 0, 0), (255, 255, 0), (255, 0, 255)]
+        for idx, (name, (x, y, w, h)) in enumerate(rois.items()):
+            color = colors[idx % len(colors)]
+            cv2.rectangle(preview_img, (x, y), (x + w, y + h), color, 3)
+            cv2.putText(preview_img, name, (x, y - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+
+        # Resize for display
+        h, w = preview_img.shape[:2]
+        max_height = 800
+        scale = max_height / h
+        display_w = int(w * scale)
+        preview_resized = cv2.resize(preview_img, (display_w, max_height))
+
+        cv2.imshow("ROI Preview - Press ENTER to accept, ESC to redo", preview_resized)
+        key = cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        if key == 27:  # ESC - redo
+            print("Redoing ROI selection...\n")
+        else:  # ENTER or any other key - accept
+            confirmed = True
+            print("ROIs accepted!")
+
+    # Save ROI positions for this subject
     Path("config").mkdir(exist_ok=True)
     with open(f"config/roi_positions_{subject}.json", 'w') as f:
         json.dump(rois, f, indent=2)
@@ -96,7 +132,7 @@ def main():
     DataExporter.print_statistics(results)
     DataExporter.export_all(results, f'uv_analysis_{subject}')
 
-    #plots
+    # plots
     Plotter.plot_intensity_distributions(results, f'outputs/figures/{subject}/histograms.png')
 
     print(f"\nAnalysis complete for subject {subject}!")

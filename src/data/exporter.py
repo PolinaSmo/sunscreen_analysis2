@@ -136,7 +136,6 @@ class DataExporter:
 
     @staticmethod
     def _results_to_dataframe(results):
-        """Convert nested results dictionary to a flat DataFrame."""
         rows = []
         for time in sorted(results.keys()):
             for roi_name, roi_data in results[time].items():
@@ -151,8 +150,10 @@ class DataExporter:
                     'std_dev': s['std'],
                     'range': s['range'],
                     'pixel_count': s['pixel_count'],
-                    'kurtosis' : s['kurtosis'],
-                    'coverage_quality' : s.get('kurtosis_peakedness', 'normal')
+                    'kurtosis': s['kurtosis'],
+                    'skewness': s.get('skewness', 0),  # ADD THIS
+                    'quality_score': s.get('quality_score', 0),  # ADD THIS
+                    'quality_rating': s.get('quality_rating', 'N/A'),  # ADD THIS
                 })
         return pd.DataFrame(rows)
 
