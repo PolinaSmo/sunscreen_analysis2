@@ -22,94 +22,96 @@ print(f"Subjects: {sorted(df['subject'].unique())}")
 print(f"Timepoints: {sorted(df['timepoint_hours'].unique())}")
 
 # ============================================
-# CREATE COMPLETE SUMMARY WITH ALL TIMEPOINTS
+# CREATE LONG-FORMAT SUMMARY (One row per subject per timepoint)
 # ============================================
-print("\nCreating complete summary with all timepoints...")
+print("\nCreating detailed timepoint summary...")
 
-summary_data = []
+detailed_rows = []
 
 for subject in sorted(df['subject'].unique()):
     subject_data = df[df['subject'] == subject]
 
-    row = {'subject': subject}
+    for timepoint in [0, 2, 4, 6]:
+        time_data = subject_data[subject_data['timepoint_hours'] == timepoint]
 
-    for roi in ['sunscreen_left', 'sunscreen_right', 'control']:
-        roi_data = subject_data[subject_data['roi_name'] == roi].sort_values('timepoint_hours')
+        row = {
+            'subject': subject,
+            'timepoint_hours': timepoint,
+        }
 
-        if len(roi_data) > 0:
-            # Mean intensity at each timepoint
-            for t in [0, 2, 4, 6]:
-                t_data = roi_data[roi_data['timepoint_hours'] == t]
-                if len(t_data) > 0:
-                    row[f'{roi}_mean_{t}h'] = t_data['mean_intensity'].values[0]
-                    row[f'{roi}_std_{t}h'] = t_data['std_dev'].values[0]  # WITHIN-ROI STD DEV!
-                else:
-                    row[f'{roi}_mean_{t}h'] = np.nan
-                    row[f'{roi}_std_{t}h'] = np.nan
+        for roi in ['sunscreen_left', 'sunscreen_right', 'control']:
+            roi_data = time_data[time_data['roi_name'] == roi]
 
-            # Overall average across all timepoints
-            row[f'{roi}_mean_avg'] = roi_data['mean_intensity'].mean()
-            row[f'{roi}_kurtosis'] = roi_data['kurtosis'].values[0] if 'kurtosis' in roi_data.columns else np.nan
+            if len(roi_data) > 0:
+                row[f'{roi}_mean'] = roi_data['mean_intensity'].values[0]
+                row[f'{roi}_std'] = roi_data['std_dev'].values[0]
+                row[f'{roi}_kurtosis'] = roi_data['kurtosis'].values[0] if 'kurtosis' in roi_data.columns else np.nan
+                row[f'{roi}_skewness'] = roi_data['skewness'].values[0] if 'skewness' in roi_data.columns else np.nan
+            else:
+                row[f'{roi}_mean'] = np.nan
+                row[f'{roi}_std'] = np.nan
+                row[f'{roi}_kurtosis'] = np.nan
+                row[f'{roi}_skewness'] = np.nan
 
-    # Calculate protection % at each timepoint
-    for t in [0, 2, 4, 6]:
-        control_mean = row.get(f'control_mean_{t}h', np.nan)
-        left_mean = row.get(f'sunscreen_left_mean_{t}h', np.nan)
-        right_mean = row.get(f'sunscreen_right_mean_{t}h', np.nan)
+        # Calculate protection at this timepoint
+        control_mean = row.get('control_mean', np.nan)
+        left_mean = row.get('sunscreen_left_mean', np.nan)
+        right_mean = row.get('sunscreen_right_mean', np.nan)
 
         if not np.isnan(control_mean) and control_mean > 0:
-            row[f'sunscreen_left_protection_{t}h'] = ((control_mean - left_mean) / control_mean) * 100
-            row[f'sunscreen_right_protection_{t}h'] = ((control_mean - right_mean) / control_mean) * 100
+            row['sunscreen_left_protection'] = ((control_mean - left_mean) / control_mean) * 100
+            row['sunscreen_right_protection'] = ((control_mean - right_mean) / control_mean) * 100
         else:
-            row[f'sunscreen_left_protection_{t}h'] = np.nan
-            row[f'sunscreen_right_protection_{t}h'] = np.nan
+            row['sunscreen_left_protection'] = np.nan
+            row['sunscreen_right_protection'] = np.nan
 
-    summary_data.append(row)
+        detailed_rows.append(row)
 
-summary_df = pd.DataFrame(summary_data)
+detailed_df = pd.DataFrame(detailed_rows)
 
-# Add AVERAGE row
-avg_row = {'subject': 'AVERAGE'}
-for col in summary_df.columns:
-    if col != 'subject':
-        values = summary_df[col].dropna().values
-        avg_row[col] = round(values.mean(), 2) if len(values) > 0 else np.nan
-summary_df = pd.concat([summary_df, pd.DataFrame([avg_row])], ignore_index=True)
-
-# Add STD_DEV row (across subjects)
-std_row = {'subject': 'STD_DEV'}
-subjects_only = summary_df[summary_df['subject'] != 'AVERAGE']
-for col in summary_df.columns:
-    if col != 'subject':
-        values = subjects_only[col].dropna().values
-        std_row[col] = round(values.std(), 2) if len(values) > 0 else ''
-summary_df = pd.concat([summary_df, pd.DataFrame([std_row])], ignore_index=True)
-
-# Save to Excel
-summary_df.to_excel('outputs/master_analysis/COMPLETE_SUMMARY.xlsx', index=False)
-print("  ✓ Complete summary saved with all timepoints and within-ROI std dev")
+# Save detailed summary (one row per subject per timepoint)
+detailed_df.to_excel('outputs/master_analysis/DETAILED_TIMEPOINT_SUMMARY.xlsx', index=False)
+print(f"  ✓ Detailed summary saved: {len(detailed_df)} rows (subjects × 4 timepoints)")
 
 # ============================================
-# PRINT PREVIEW
+# ALSO CREATE PIVOT SUMMARY (Wide format - easier for comparison)
 # ============================================
-print("\n" + "=" * 80)
-print("PREVIEW - What each column means:")
-print("=" * 80)
-print("  *_mean_Xh = Average brightness at that timepoint (lower = better)")
-print("  *_std_Xh  = Standard deviation WITHIN the ROI at that timepoint")
-print("             (lower = more even coverage)")
-print("  *_protection_Xh = % of UV blocked at that timepoint")
-print("=" * 80)
+print("\nCreating pivot summary...")
 
-print("\nFirst few columns of summary:")
-print(summary_df.columns.tolist()[:15])
-print("\nFirst data row (subject 11):")
-print(summary_df.iloc[0].to_dict())
+# Pivot for mean intensity
+mean_pivot = detailed_df.pivot_table(
+    index='subject',
+    columns='timepoint_hours',
+    values='sunscreen_left_mean',
+    aggfunc='first'
+).add_prefix('sunscreen_left_mean_')
 
-print("\n✅ COMPLETE_SUMMARY.xlsx now includes:")
-print("  - All timepoints (0, 2, 4, 6 hours)")
-print("  - Mean intensity at each timepoint")
-print("  - WITHIN-ROI standard deviation at each timepoint")
-print("  - Protection % at each timepoint")
-print("  - AVERAGE row (across subjects)")
-print("  - STD_DEV row (variation across subjects)")
+# Pivot for kurtosis
+kurtosis_pivot = detailed_df.pivot_table(
+    index='subject',
+    columns='timepoint_hours',
+    values='sunscreen_left_kurtosis',
+    aggfunc='first'
+).add_prefix('sunscreen_left_kurtosis_')
+
+# Combine everything
+pivot_summary = pd.concat([mean_pivot, kurtosis_pivot], axis=1)
+pivot_summary.reset_index().to_excel('outputs/master_analysis/PIVOT_SUMMARY.xlsx', index=False)
+
+print("  ✓ Pivot summary saved")
+
+# ============================================
+# WHAT EACH FILE CONTAINS
+# ============================================
+print("\n" + "=" * 60)
+print("FILES CREATED:")
+print("=" * 60)
+print("\n1. DETAILED_TIMEPOINT_SUMMARY.xlsx")
+print("   → One row per subject per timepoint (4 rows per subject)")
+print("   → Columns: subject, timepoint, mean, std, kurtosis, skewness for each ROI")
+print("\n2. PIVOT_SUMMARY.xlsx")
+print("   → One row per subject, columns split by timepoint")
+print("   → Easier to compare 0h vs 6h directly")
+print("\n3. COMPLETE_SUMMARY.xlsx (existing)")
+print("   → Averaged across timepoints (one row per subject)")
+print("=" * 60)
