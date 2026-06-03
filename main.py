@@ -1,141 +1,202 @@
 import sys
 import os
 import json
-from pathlib import Path
-import matplotlib.pyplot as plt
 import cv2
+import numpy as np
+import pandas as pd
+from pathlib import Path
+from scipy import stats
 
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
-
-# Disable bytecode cache
 sys.dont_write_bytecode = True
 os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 
-from src.core.image_loader import ImageLoader
-from src.ui.rect_selector import RectangleROISelector
-from src.core.intensity_analyzer import IntensityAnalyzer
-from src.data.exporter import DataExporter
-from src.visualization.plotter import Plotter
+from src.ui.rect_selector import SameSizeROISelector, RectangleROISelector, preview_rois_on_timepoints
+def calculate_statistics_from_intensities(intensities):
+    if len(intensities) == 0:
+        return {}
+
+    return {
+        'min': np.min(intensities),
+        'max': np.max(intensities),
+        'mean': np.mean(intensities),
+        'median': np.median(intensities),
+        'std': np.std(intensities),
+        'range': np.max(intensities) - np.min(intensities),
+        'pixel_count': len(intensities),
+        'variance': np.var(intensities),
+        'kurtosis': stats.kurtosis(intensities) if len(intensities) > 3 else 0,
+        'skewness': stats.skew(intensities) if len(intensities) > 2 else 0,
+    }
+
+
+def extract_blue_channel_intensities(image, roi):
+    x, y, w, h = roi
+    #convert to integers (fixes the TypeError)
+    x, y, w, h = int(x), int(y), int(w), int(h)
+
+    img_h, img_w = image.shape[:2]
+    x = max(0, min(x, img_w - 1))
+    y = max(0, min(y, img_h - 1))
+    w = min(w, img_w - x)
+    h = min(h, img_h - y)
+
+    roi_region = image[y:y + h, x:x + w]
+    blue_channel = roi_region[:, :, 0]
+    return blue_channel.flatten()
 
 
 def main():
-    # Get the subject/folder number from user
-    subject = input("Enter subject/folder number (11-20): ").strip()
+    subject_num = int(input("Enter subject number (1-20): ").strip())
+    base_path = Path(f"images/{subject_num}")
+    pre_app_path = base_path / "pre_application.JPG"
+    timepoint_paths = {
+        0: base_path / "0hours.JPG",
+        2: base_path / "2hours.JPG",
+        4: base_path / "4hours.JPG",
+        6: base_path / "6hours.JPG",
+    }
 
-    # Base path for this subject
-    base_path = Path(f"images/{subject}")
+    if pre_app_path.exists():
+        control_image = cv2.imread(str(pre_app_path))
+        print(f"Using pre-application image as control: {pre_app_path}")
+    else:
+        control_image = cv2.imread(str(timepoint_paths[0]))
+        print(f"Warning: No pre-application image. Using 0hours as control.")
 
-    # Try different possible file extensions/cases
-    time_files = ['0hours', '2hours', '4hours', '6hours']
+    if control_image is None:
+        print(f"Error: Could not load control image")
+        return
+    images = {}
+    for t, path in timepoint_paths.items():
+        if path.exists():
+            img = cv2.imread(str(path))
+            images[t] = img
+            print(f"Loaded: {path}")
+        else:
+            print(f"Warning: Missing {path}")
+
+    if len(images) == 0:
+        print("No images found!")
+        return
+
+    all_preview_images = [control_image] + [images[t] for t in [0, 2, 4, 6]]
+    preview_timepoints = ['Control'] + [0, 2, 4, 6]
+
+
+    # ROI SELECTION with same size for left/right
+    selector = SameSizeROISelector(control_image)
+    print("\n=== Select LEFT sunscreen ROI (this will set the size for both) ===")
+    left_roi = selector.select_roi("Select LEFT sunscreen ROI", is_first=True)
+    if left_roi is None:
+        print("Selection cancelled")
+        return
+    print("\n=== Select RIGHT sunscreen ROI (same size, drag to position) ===")
+    right_roi = selector.select_roi("Select RIGHT sunscreen ROI", is_first=False)
+    if right_roi is None:
+        print("Selection cancelled")
+        return
+    print("\n=== Select CONTROL ROI (bare skin, no sunscreen) ===")
+    print(f"Control ROI will use the same size as left/right: {left_roi[2]} x {left_roi[3]}")
+    control_selector = SameSizeROISelector(control_image)
+    #set the fixed size from left_roi first
+    control_selector.fixed_size = (left_roi[2], left_roi[3])
+    control_roi = control_selector.select_roi("Select CONTROL ROI (same size, drag to position)", is_first=False)
+    if control_roi is None:
+        print("Selection cancelled")
+        return
+
+    # convert to integers
+    rois = {
+        'sunscreen_left': (int(left_roi[0]), int(left_roi[1]), int(left_roi[2]), int(left_roi[3])),
+        'sunscreen_right': (int(right_roi[0]), int(right_roi[1]), int(right_roi[2]), int(right_roi[3])),
+        'control': (int(control_roi[0]), int(control_roi[1]), int(control_roi[2]), int(control_roi[3])),
+    }
+
+    # PREVIEW: Show all ROIs on all timepoints
+    print("\n=== PREVIEW: Checking ROIs on all timepoints ===")
+    preview_images = []
+    for img in all_preview_images:
+        img_copy = img.copy()
+        for roi_name, (x, y, w, h) in rois.items():
+            if roi_name == 'sunscreen_left':
+                color = (0, 255, 0)
+            elif roi_name == 'sunscreen_right':
+                color = (255, 0, 0)
+            else:
+                color = (0, 0, 255)
+            x, y, w, h = int(x), int(y), int(w), int(h)
+            cv2.rectangle(img_copy, (x, y), (x + w, y + h), color, 3)
+            cv2.putText(img_copy, roi_name, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+        preview_images.append(img_copy)
+
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(1, len(preview_images), figsize=(20, 5))
+    fig.suptitle("ROI Preview - Check all timepoints", fontsize=14)
+    for idx, (img, label) in enumerate(zip(preview_images, preview_timepoints)):
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        axes[idx].imshow(img_rgb)
+        axes[idx].set_title(f"{label}")
+        axes[idx].axis('off')
+    plt.tight_layout()
+    plt.show()
+
+    response = input("\nAre these ROIs correct for ALL timepoints? (y/n): ").strip().lower()
+    if response != 'y':
+        print("ROIs rejected. Please re-run.")
+        return
+
+
+    # ANALYZE each timepoint
+    results = {}
     timepoints = [0, 2, 4, 6]
-    image_paths = []
+    for t in timepoints:
+        if t not in images:
+            continue
+        img = images[t]
+        print(f"\nAnalyzing timepoint {t}h...")
+        time_result = {}
+        for roi_name, roi in rois.items():
+            intensities = extract_blue_channel_intensities(img, roi)
+            stats_dict = calculate_statistics_from_intensities(intensities)
+            time_result[roi_name] = {
+                'intensities': intensities.tolist(),
+                'stats': stats_dict,
+                'roi': roi,
+                'pixel_count': len(intensities)
+            }
+            print(f"  {roi_name}: mean={stats_dict['mean']:.2f}, std={stats_dict['std']:.2f}")
 
-    for tf in time_files:
-        possible_paths = [
-            base_path / f"{tf}.JPG",
-            base_path / f"{tf}.jpg",
-            base_path / f"{tf}.jpeg",
-            base_path / f"{tf}.JPEG",
-        ]
+        results[t] = time_result
 
-        found = False
-        for path in possible_paths:
-            if path.exists():
-                image_paths.append(str(path))
-                found = True
-                print(f"Found: {path}")
-                break
+    # EXPORT to CSV
+    #rows = []
+    for t in timepoints:
+        if t not in results:
+            continue
+        for roi_name, roi_data in results[t].items():
+            s = roi_data['stats']
+            rows.append({
+                'timepoint_hours': t,
+                'roi_name': roi_name,
+                'min_intensity': s['min'],
+                'max_intensity': s['max'],
+                'mean_intensity': s['mean'],
+                'median_intensity': s['median'],
+                'std_dev': s['std'],
+                'range': s['range'],
+                'pixel_count': s['pixel_count'],
+                'kurtosis': s['kurtosis'],
+                'skewness': s['skewness'],
+            })
 
-        if not found:
-            print(f"Error: Could not find {tf} image in {base_path}")
-            print(f"Files in folder: {[f.name for f in base_path.iterdir()]}")
-            return
+    df = pd.DataFrame(rows)
+    output_file = f'outputs/reports/uv_analysis_{subject_num}.csv'
+    df.to_csv(output_file, index=False)
+    print(f"\n✓ Results saved to {output_file}")
 
-    # Create output directories with subject number
-    Path(f"outputs/figures/{subject}").mkdir(parents=True, exist_ok=True)
-    Path(f"outputs/reports/{subject}").mkdir(parents=True, exist_ok=True)
-
-    # Load all images
-    loader = ImageLoader()
-    images = loader.load_images(image_paths)
-    first_image = images[0]
-
-    # Get number of ROIs from user
-    try:
-        num_rois = int(input("How many ROIs do you want to define? "))
-    except ValueError:
-        print("Invalid input. Using default: 2 ROIs.")
-        num_rois = 2
-
-    # ROI SELECTION LOOP with preview/redo option
-    rois = {}
-    confirmed = False
-
-    while not confirmed:
-        rois = {}
-        for i in range(num_rois):
-            name = input(
-                f"Enter name for ROI #{i + 1} (e.g., 'sunscreen_left', 'control', 'sunscreen_right'): ").strip()
-            if not name:
-                name = f"ROI_{i + 1}"
-            print(f"\n--- Defining ROI: {name} ---")
-            selector = RectangleROISelector(first_image)
-            roi_coords = selector.get_roi()
-            if roi_coords is None:
-                print("ROI selection cancelled. Exiting.")
-                return
-            rois[name] = roi_coords
-
-        # ============================================
-        # PREVIEW STEP: Show all ROIs on one image
-        # ============================================
-        print("\n" + "=" * 50)
-        print("PREVIEW: Review your ROI selections")
-        print("=" * 50)
-
-        preview_img = first_image.copy()
-        colors = [(0, 255, 0), (0, 0, 255), (255, 0, 0), (255, 255, 0), (255, 0, 255)]
-        for idx, (name, (x, y, w, h)) in enumerate(rois.items()):
-            color = colors[idx % len(colors)]
-            cv2.rectangle(preview_img, (x, y), (x + w, y + h), color, 3)
-            cv2.putText(preview_img, name, (x, y - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
-
-        # Resize for display
-        h, w = preview_img.shape[:2]
-        max_height = 800
-        scale = max_height / h
-        display_w = int(w * scale)
-        preview_resized = cv2.resize(preview_img, (display_w, max_height))
-
-        cv2.imshow("ROI Preview - Press ENTER to accept, ESC to redo", preview_resized)
-        key = cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-        if key == 27:  # ESC - redo
-            print("Redoing ROI selection...\n")
-        else:  # ENTER or any other key - accept
-            confirmed = True
-            print("ROIs accepted!")
-
-    # Save ROI positions for this subject
-    Path("config").mkdir(exist_ok=True)
-    with open(f"config/roi_positions_{subject}.json", 'w') as f:
-        json.dump(rois, f, indent=2)
-    print(f"✓ ROI positions saved to config/roi_positions_{subject}.json")
-
-    analyzer = IntensityAnalyzer(rois, subject=subject, output_dir="outputs/roi_images")
-
-    results = analyzer.analyze_all_timepoints(images, timepoints, save_roi_images=True)
-
-    DataExporter.print_statistics(results)
-    DataExporter.export_all(results, f'uv_analysis_{subject}')
-
-    # plots
-    Plotter.plot_intensity_distributions(results, f'outputs/figures/{subject}/histograms.png')
-
-    print(f"\nAnalysis complete for subject {subject}!")
+    print(f"\nAnalysis complete for subject {subject_num}")
 
 
 if __name__ == "__main__":

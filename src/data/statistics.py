@@ -3,11 +3,8 @@ from scipy import stats
 
 
 def calculate_statistics(intensities):
-    """Calculate comprehensive statistics for intensity array"""
     if len(intensities) == 0:
         return {}
-
-    # Remove outliers for more accurate kurtosis
     q1 = np.percentile(intensities, 25)
     q3 = np.percentile(intensities, 75)
     iqr = q3 - q1
@@ -16,20 +13,13 @@ def calculate_statistics(intensities):
     filtered = intensities[(intensities >= lower) & (intensities <= upper)]
 
     if len(filtered) < 4:
-        filtered = intensities  # fallback if too few points
-
-    # Calculate base statistics
+        filtered = intensities
     kurt = stats.kurtosis(filtered, fisher=True)
     skew = stats.skew(filtered) if len(filtered) > 1 else 0
-
-    # NEW: Quality Score = Kurtosis / |Skewness|
-    # Higher score = better, more even coverage
     if abs(skew) > 0.01:
         quality_score = kurt / abs(skew)
     else:
-        quality_score = kurt * 10 if kurt > 0 else 0  # Handle near-zero skew
-
-    # Classification based on quality score
+        quality_score = kurt * 10 if kurt > 0 else 0
     if quality_score > 2:
         quality_rating = "Excellent"
     elif quality_score > 1:
